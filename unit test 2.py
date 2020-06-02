@@ -1,20 +1,36 @@
+
 import unittest
 
-class TestStringMethods(unittest.TestCase):
+from unittest import IsolatedAsyncioTestCase
 
-    def test_upper(self):
-        self.assertEqual('foo'.upper(), 'FOO')
+events = []
 
-    def test_isupper(self):
-        self.assertTrue('FOO'.isupper())
-        self.assertFalse('Foo'.isupper())
 
-    def test_split(self):
-        s = 'hello world'
-        self.assertEqual(s.split(), ['hello', 'world'])
-        # check that s.split fails when the separator is not a string
-        with self.assertRaises(TypeError):
-            s.split(2)
+class Test(IsolatedAsyncioTestCase):
 
-if __name__ == '__main__':
+
+    def setUp(self):
+        events.append("setUp")
+
+    async def asyncSetUp(self):
+        self._async_connection = await AsyncConnection()
+        events.append("asyncSetUp")
+
+    async def test_response(self):
+        events.append("test_response")
+        response = await self._async_connection.get("https://example.com")
+        self.assertEqual(response.status_code, 200)
+        self.addAsyncCleanup(self.on_cleanup)
+
+    def tearDown(self):
+        events.append("tearDown")
+
+    async def asyncTearDown(self):
+        await self._async_connection.close()
+        events.append("asyncTearDown")
+
+    async def on_cleanup(self):
+        events.append("cleanup")
+
+if __name__ == "__main__":
     unittest.main()
